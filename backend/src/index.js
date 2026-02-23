@@ -3,6 +3,7 @@ const express = require('express');
 const authRouter = require('./routes/auth');
 const tripsRouter = require('./routes/trips');
 const expensesRouter = require('./routes/expenses');
+const aiRouter = require('./routes/ai');
 
 const app = express();
 const PORT = 3000;
@@ -22,6 +23,7 @@ app.get('/health', (_req, res) => {
 
 app.use('/api/auth', authRouter);
 app.use('/api/trips', tripsRouter);
+app.use('/api/trips', aiRouter);
 app.use('/api/expenses', expensesRouter);
 
 app.listen(PORT, () => {
