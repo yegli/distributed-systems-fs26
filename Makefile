@@ -1,4 +1,4 @@
-.PHONY: up down build install logs ps clean
+.PHONY: up down build install logs ps clean load-test
 
 # Default: install deps, then bring up the full stack
 up: install
@@ -30,3 +30,12 @@ ps:
 clean:
 	docker compose down -v
 	rm -rf backend/node_modules frontend/node_modules
+
+# Run k6 load test against the running stack (requires `make up` first)
+# Uses host.docker.internal for macOS Docker Desktop.
+# On Linux with Docker Engine, replace with:
+#   docker run --rm -i --network host grafana/k6 run - < load-test/script.js
+load-test:
+	docker run --rm -i grafana/k6 run \
+		-e BASE_URL=http://host.docker.internal \
+		- < load-test/script.js
