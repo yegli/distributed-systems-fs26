@@ -24,8 +24,20 @@
             <div class="meta-value">{{ formatDate(trip.start_date) }} – {{ formatDate(trip.end_date) }}</div>
           </div>
           <div>
-            <div class="meta-label">Total spend</div>
-            <div class="meta-value meta-total">{{ formatAmount(totalSpend) }}</div>
+            <div class="meta-label">≈ Total ({{ homeCurrency }})</div>
+            <div class="meta-value meta-total">{{ fmtCurrency(totalInHome, homeCurrency) }}</div>
+          </div>
+          <div>
+            <div class="meta-label">Home currency</div>
+            <div class="currency-toggle">
+              <button
+                v-for="c in HOME_CURRENCIES"
+                :key="c"
+                class="btn btn-sm"
+                :class="c === homeCurrency ? 'btn-primary' : 'btn-ghost'"
+                @click="setHomeCurrency(c)"
+              >{{ c }}</button>
+            </div>
           </div>
         </div>
       </div>
@@ -44,7 +56,11 @@
       <!-- Expense list -->
       <div class="card">
         <h3 style="margin-bottom:14px">Expenses ({{ trip.expenses.length }})</h3>
-        <ExpenseList :expenses="trip.expenses" @delete="onExpenseDeleted" />
+        <ExpenseList
+          :expenses="trip.expenses"
+          :homeCurrency="homeCurrency"
+          @delete="onExpenseDeleted"
+        />
       </div>
     </template>
   </div>
@@ -58,6 +74,13 @@ import http from '../api/http'
 import ExpenseList from '../components/ExpenseList.vue'
 import ExpenseForm from '../components/ExpenseForm.vue'
 import AISummary from '../components/AISummary.vue'
+import {
+  HOME_CURRENCIES,
+  convert,
+  fmtCurrency,
+  getStoredHomeCurrency,
+  setStoredHomeCurrency,
+} from '../utils/currency.js'
 
 const route = useRoute()
 const router = useRouter()
@@ -65,6 +88,12 @@ const auth = useAuthStore()
 
 const trip = ref(null)
 const loading = ref(true)
+const homeCurrency = ref(getStoredHomeCurrency())
+
+function setHomeCurrency(c) {
+  homeCurrency.value = c
+  setStoredHomeCurrency(c)
+}
 
 onMounted(async () => {
   try {
@@ -77,17 +106,16 @@ onMounted(async () => {
   }
 })
 
-const totalSpend = computed(() => {
+const totalInHome = computed(() => {
   if (!trip.value) return 0
-  return trip.value.expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0)
+  return trip.value.expenses.reduce(
+    (sum, e) => sum + convert(parseFloat(e.amount), e.currency, homeCurrency.value),
+    0
+  )
 })
 
 function formatDate(d) {
   return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
-}
-
-function formatAmount(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 }
 
 function onExpenseAdded(expense) {
@@ -114,8 +142,11 @@ function handleLogout() {
   display: flex;
   gap: 32px;
   flex-wrap: wrap;
+  align-items: flex-start;
 }
 .meta-label { font-size: 0.75rem; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; }
 .meta-value { font-size: 1rem; margin-top: 2px; }
 .meta-total { font-size: 1.4rem; font-weight: 700; color: #2563eb; }
+.currency-toggle { display: flex; gap: 4px; margin-top: 4px; }
+.btn-sm { padding: 4px 10px; font-size: 0.78rem; }
 </style>

@@ -3,6 +3,17 @@
     <div class="nav">
       <h1>Holiday Expense Tracker</h1>
       <div style="display:flex;align-items:center;gap:12px">
+        <!-- Home currency selector -->
+        <div class="currency-toggle">
+          <span class="currency-label">Home:</span>
+          <button
+            v-for="c in HOME_CURRENCIES"
+            :key="c"
+            class="btn btn-sm"
+            :class="c === homeCurrency ? 'btn-primary' : 'btn-ghost'"
+            @click="setHomeCurrency(c)"
+          >{{ c }}</button>
+        </div>
         <span style="font-size:0.85rem;color:#6b7280">{{ auth.email }}</span>
         <button class="btn btn-ghost" @click="handleLogout">Logout</button>
       </div>
@@ -48,6 +59,7 @@
         :key="trip.id"
         :trip="trip"
         :total="tripTotals[trip.id] || 0"
+        :homeCurrency="homeCurrency"
         @click="router.push(`/trips/${trip.id}`)"
       />
     </div>
@@ -55,22 +67,44 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import http from '../api/http'
 import TripCard from '../components/TripCard.vue'
+import {
+  HOME_CURRENCIES,
+  convert,
+  getStoredHomeCurrency,
+  setStoredHomeCurrency,
+} from '../utils/currency.js'
 
 const router = useRouter()
 const auth = useAuthStore()
 
 const trips = ref([])
-const tripTotals = ref({})
+const allExpenses = ref([])
 const loading = ref(true)
+const homeCurrency = ref(getStoredHomeCurrency())
 
 const newTrip = ref({ name: '', destination: '', start_date: '', end_date: '' })
 const tripError = ref('')
 const creatingTrip = ref(false)
+
+function setHomeCurrency(c) {
+  homeCurrency.value = c
+  setStoredHomeCurrency(c)
+}
+
+// Recomputes automatically when homeCurrency changes
+const tripTotals = computed(() => {
+  const totals = {}
+  for (const e of allExpenses.value) {
+    const converted = convert(parseFloat(e.amount), e.currency, homeCurrency.value)
+    totals[e.trip_id] = (totals[e.trip_id] || 0) + converted
+  }
+  return totals
+})
 
 onMounted(async () => {
   try {
@@ -79,12 +113,7 @@ onMounted(async () => {
       http.get('/expenses'),
     ])
     trips.value = tripsRes.data
-    // Aggregate total spend per trip client-side
-    const totals = {}
-    for (const e of expensesRes.data) {
-      totals[e.trip_id] = (totals[e.trip_id] || 0) + parseFloat(e.amount)
-    }
-    tripTotals.value = totals
+    allExpenses.value = expensesRes.data
   } finally {
     loading.value = false
   }
@@ -121,4 +150,7 @@ function handleLogout() {
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
 }
+.currency-toggle { display: flex; align-items: center; gap: 4px; }
+.currency-label { font-size: 0.78rem; color: #6b7280; margin-right: 2px; }
+.btn-sm { padding: 4px 10px; font-size: 0.78rem; }
 </style>

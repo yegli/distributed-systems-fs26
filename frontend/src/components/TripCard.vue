@@ -8,24 +8,24 @@
       {{ formatDate(trip.start_date) }} – {{ formatDate(trip.end_date) }}
     </div>
     <div class="trip-card-total">
-      {{ formatAmount(total) }}
+      {{ fmtCurrency(total, homeCurrency) }}
     </div>
+    <div class="trip-card-currency">≈ {{ homeCurrency }}</div>
   </div>
 </template>
 
 <script setup>
+import { fmtCurrency } from '../utils/currency.js'
+
 defineProps({
-  trip: { type: Object, required: true },
-  total: { type: Number, default: 0 },
+  trip:         { type: Object, required: true },
+  total:        { type: Number, default: 0 },
+  homeCurrency: { type: String, default: 'CHF' },
 })
 defineEmits(['click'])
 
 function formatDate(d) {
   return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—'
-}
-
-function formatAmount(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 }
 </script>
 
@@ -43,4 +43,5 @@ function formatAmount(n) {
 .destination { font-size: 0.8rem; color: #6b7280; }
 .trip-card-dates { font-size: 0.8rem; color: #6b7280; }
 .trip-card-total { font-size: 1.5rem; font-weight: 700; color: #2563eb; margin-top: 4px; }
+.trip-card-currency { font-size: 0.72rem; color: #059669; margin-top: -4px; }
 </style>

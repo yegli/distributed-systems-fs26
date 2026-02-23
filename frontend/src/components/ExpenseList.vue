@@ -10,6 +10,7 @@
           <th>Category</th>
           <th>Notes</th>
           <th style="text-align:right">Amount</th>
+          <th style="text-align:right">≈ {{ homeCurrency }}</th>
           <th></th>
         </tr>
       </thead>
@@ -19,7 +20,10 @@
           <td><span class="badge" :class="e.category">{{ e.category }}</span></td>
           <td class="notes">{{ e.notes || '—' }}</td>
           <td class="nowrap" style="text-align:right;font-weight:600">
-            {{ e.currency }} {{ parseFloat(e.amount).toFixed(2) }}
+            {{ e.currency.trim() }} {{ parseFloat(e.amount).toFixed(2) }}
+          </td>
+          <td class="nowrap converted" style="text-align:right">
+            {{ fmtCurrency(convert(parseFloat(e.amount), e.currency, homeCurrency), homeCurrency) }}
           </td>
           <td>
             <button class="btn btn-danger btn-sm" @click="$emit('delete', e.id)">✕</button>
@@ -28,9 +32,12 @@
       </tbody>
       <tfoot>
         <tr>
-          <td colspan="3" style="text-align:right;font-weight:600;color:#6b7280">Total</td>
+          <td colspan="3" style="text-align:right;font-weight:600;color:#6b7280">
+            Total ({{ homeCurrency }})
+          </td>
+          <td></td>
           <td style="text-align:right;font-weight:700;font-size:1.05rem">
-            {{ formatAmount(total) }}
+            {{ fmtCurrency(totalInHome, homeCurrency) }}
           </td>
           <td></td>
         </tr>
@@ -41,9 +48,11 @@
 
 <script setup>
 import { computed } from 'vue'
+import { convert, fmtCurrency } from '../utils/currency.js'
 
 const props = defineProps({
-  expenses: { type: Array, required: true },
+  expenses:     { type: Array,  required: true },
+  homeCurrency: { type: String, default: 'CHF' },
 })
 defineEmits(['delete'])
 
@@ -51,16 +60,15 @@ const sortedExpenses = computed(() =>
   [...props.expenses].sort((a, b) => a.date.localeCompare(b.date))
 )
 
-const total = computed(() =>
-  props.expenses.reduce((sum, e) => sum + parseFloat(e.amount), 0)
+const totalInHome = computed(() =>
+  props.expenses.reduce(
+    (sum, e) => sum + convert(parseFloat(e.amount), e.currency, props.homeCurrency),
+    0
+  )
 )
 
 function formatDate(d) {
   return d ? new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : '—'
-}
-
-function formatAmount(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n)
 }
 </script>
 
@@ -92,6 +100,7 @@ function formatAmount(n) {
 }
 .notes { color: #374151; max-width: 240px; }
 .nowrap { white-space: nowrap; }
+.converted { color: #059669; font-size: 0.85rem; }
 .btn-sm { padding: 4px 8px; font-size: 0.75rem; }
 
 .badge {
