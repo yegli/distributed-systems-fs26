@@ -27,6 +27,13 @@ go.work.sum
 # env file
 .env
 
+# Node.js
+node_modules/
+dist/
+
+# Generated files (produced by make install)
+backend/src/db/seed.sql
+
 # Editor/IDE
 # .idea/
 # .vscode/
