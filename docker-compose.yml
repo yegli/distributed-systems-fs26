@@ -19,8 +19,8 @@ services:
     build: ./backend
     environment:
       INSTANCE_NAME: api-1
-      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/expenses
-      JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-changeme}@postgres:5432/expenses
+      JWT_SECRET: ${JWT_SECRET:-changeme}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       postgres:
