@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const authRouter = require('./routes/auth');
+const tripsRouter = require('./routes/trips');
+const expensesRouter = require('./routes/expenses');
 
 const app = express();
 const PORT = 3000;
@@ -19,6 +21,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/auth', authRouter);
+app.use('/api/trips', tripsRouter);
+app.use('/api/expenses', expensesRouter);
 
 app.listen(PORT, () => {
   console.log(`[${INSTANCE_NAME}] listening on port ${PORT}`);

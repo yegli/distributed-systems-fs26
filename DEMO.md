@@ -103,35 +103,130 @@ curl -s -X POST localhost/api/auth/login \
 
 ---
 
-## 3. Trips & Expenses *(implemented in Task 03)*
+## 3. Trips & Expenses
+
+### Setup — get a token first
 
 ```bash
-# List all trips for the logged-in user
+# Log in as alice (15 seeded Thailand expenses ready to go)
+TOKEN=$(curl -s -X POST localhost/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"alice@example.com","password":"password"}' | jq -r '.token')
+
+echo $TOKEN
+```
+
+### List trips
+
+```bash
+# Returns alice's trips — "Thailand 2025" is pre-seeded.
 curl -s localhost/api/trips \
   -H "Authorization: Bearer $TOKEN" | jq
+```
 
-# Create a new trip
+Expected: array with one trip object including `id`, `name`, `destination`, `start_date`, `end_date`.
+
+### Create a new trip
+
+```bash
+# Returns the newly created trip with its id.
 curl -s -X POST localhost/api/trips \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
   -d '{"name":"Japan 2026","destination":"Japan","start_date":"2026-04-01","end_date":"2026-04-14"}' | jq
+```
 
-# Get a single trip with its expenses
+### Get a single trip with all its expenses
+
+```bash
+# Trip 1 = Thailand 2025. Returns trip metadata + expenses[] in one response.
 curl -s localhost/api/trips/1 \
   -H "Authorization: Bearer $TOKEN" | jq
+```
 
-# List all expenses for the logged-in user
+Expected: trip object with `"expenses": [ ... 15 items ... ]`.
+
+### Isolation — User B cannot see User A's trips
+
+```bash
+# Log in as bob (no trips seeded).
+BOB=$(curl -s -X POST localhost/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"bob@example.com","password":"password"}' | jq -r '.token')
+
+# Returns [] — bob has no trips.
+curl -s localhost/api/trips -H "Authorization: Bearer $BOB" | jq
+
+# Trying to access alice's trip with bob's token → 404.
+curl -s localhost/api/trips/1 -H "Authorization: Bearer $BOB" | jq
+```
+
+### List all expenses (with optional trip filter)
+
+```bash
+# All of alice's expenses across every trip.
 curl -s localhost/api/expenses \
   -H "Authorization: Bearer $TOKEN" | jq
 
-# Add an expense to a trip
+# Filter to trip 1 only.
+curl -s "localhost/api/expenses?trip_id=1" \
+  -H "Authorization: Bearer $TOKEN" | jq
+```
+
+### Add an expense
+
+```bash
+# Adds a new expense to trip 1. Returns the created expense with its id.
 curl -s -X POST localhost/api/expenses \
   -H "Authorization: Bearer $TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"trip_id":1,"amount":120.50,"currency":"EUR","category":"accommodation","date":"2026-04-02","notes":"Ryokan in Kyoto"}' | jq
+  -d '{"trip_id":1,"amount":45.00,"currency":"USD","category":"food","date":"2025-03-10","notes":"Mango sticky rice"}' | jq
+```
 
-# Delete an expense
-curl -s -X DELETE localhost/api/expenses/1 \
+### Input validation
+
+```bash
+# Missing required field → 400
+curl -s -X POST localhost/api/expenses \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"trip_id":1,"amount":10.00}' | jq
+
+# Invalid category → 400
+curl -s -X POST localhost/api/expenses \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"trip_id":1,"amount":10.00,"category":"luxury","date":"2025-03-10"}' | jq
+
+# Negative amount → 400
+curl -s -X POST localhost/api/expenses \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"trip_id":1,"amount":-5,"category":"food","date":"2025-03-10"}' | jq
+```
+
+### Delete an expense
+
+```bash
+# Note the id returned by the POST above, then delete it.
+# Scoped to the current user — cannot delete someone else's expense.
+curl -s -X DELETE localhost/api/expenses/16 \
+  -H "Authorization: Bearer $TOKEN" | jq
+
+# Second delete → 404 (already gone)
+curl -s -X DELETE localhost/api/expenses/16 \
+  -H "Authorization: Bearer $TOKEN" | jq
+```
+
+### Delete a trip (cascades expenses)
+
+```bash
+# Delete the Japan trip created earlier (check its id from the POST response).
+curl -s -X DELETE localhost/api/trips/2 \
+  -H "Authorization: Bearer $TOKEN" | jq
+
+# Confirm it's gone
+curl -s localhost/api/trips \
   -H "Authorization: Bearer $TOKEN" | jq
 ```
 
