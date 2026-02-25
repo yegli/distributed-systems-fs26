@@ -4,6 +4,7 @@ const authRouter = require('./routes/auth');
 const tripsRouter = require('./routes/trips');
 const expensesRouter = require('./routes/expenses');
 const aiRouter = require('./routes/ai');
+const voiceRouter = require('./routes/voice');
 
 const app = express();
 const PORT = 3000;
@@ -25,6 +26,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/trips', tripsRouter);
 app.use('/api/trips', aiRouter);
 app.use('/api/expenses', expensesRouter);
+app.use('/api/voice', voiceRouter);
 
 app.listen(PORT, () => {
   console.log(`[${INSTANCE_NAME}] listening on port ${PORT}`);

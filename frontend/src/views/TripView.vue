@@ -42,6 +42,12 @@
         </div>
       </div>
 
+      <!-- Spending breakdown chart -->
+      <div class="card" style="margin-bottom:20px">
+        <h3 style="margin-bottom:14px">Spending breakdown</h3>
+        <ExpenseChart :expenses="trip.expenses" :homeCurrency="homeCurrency" />
+      </div>
+
       <!-- AI Summary -->
       <div class="card" style="margin-bottom:20px">
         <AISummary :tripId="trip.id" />
@@ -49,7 +55,10 @@
 
       <!-- Add expense -->
       <div class="card" style="margin-bottom:20px">
-        <h3 style="margin-bottom:14px">Add expense</h3>
+        <div class="add-expense-header">
+          <h3>Add expense</h3>
+          <VoiceButton :tripId="trip.id" @expense-added="onExpenseAdded" />
+        </div>
         <ExpenseForm :tripId="trip.id" @submitted="onExpenseAdded" />
       </div>
 
@@ -74,6 +83,8 @@ import http from '../api/http'
 import ExpenseList from '../components/ExpenseList.vue'
 import ExpenseForm from '../components/ExpenseForm.vue'
 import AISummary from '../components/AISummary.vue'
+import VoiceButton from '../components/VoiceButton.vue'
+import ExpenseChart from '../components/ExpenseChart.vue'
 import {
   HOME_CURRENCIES,
   convert,
@@ -149,4 +160,11 @@ function handleLogout() {
 .meta-total { font-size: 1.4rem; font-weight: 700; color: #2563eb; }
 .currency-toggle { display: flex; gap: 4px; margin-top: 4px; }
 .btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+.add-expense-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.add-expense-header h3 { margin: 0; }
 </style>
