@@ -62,13 +62,13 @@ services:
       - traefik.http.services.frontend.loadbalancer.server.port=80
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: expenses
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       - ./backend/src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
       - ./backend/src/db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql:ro
     healthcheck:

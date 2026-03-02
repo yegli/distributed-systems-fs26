@@ -46,36 +46,4 @@ Highest single expense: ${topExpenseStr}
 Categories with zero spend: ${unusedStr}`;
 }
 
-/**
- * Returns a mock summary when OPENAI_API_KEY is not set.
- * Uses the same four-section format so the frontend always gets identical structure.
- */
-function buildMockSummary({ destination, tripDays, expenseCount, dailyAvgInUSD, breakdown, unusedCategories }) {
-  const sorted = Object.entries(breakdown).sort(([, a], [, b]) => b - a);
-  const totalLocal = sorted.reduce((sum, [, v]) => sum + v, 0);
-
-  const top3 = sorted.slice(0, 3).map(([cat, amt]) => {
-    const pct = totalLocal > 0 ? ((amt / totalLocal) * 100).toFixed(0) : 0;
-    return `• ${cat.charAt(0).toUpperCase() + cat.slice(1)}: $${amt.toFixed(2)} (${pct}% of total)`;
-  });
-
-  const [topCat, topAmt] = sorted[0] || ['expenses', 0];
-  const topCatPct = totalLocal > 0 ? ((topAmt / totalLocal) * 100).toFixed(0) : 0;
-  const unusedStr = unusedCategories.length > 0 ? unusedCategories.join(' and ') : null;
-
-  return [
-    '[OVERVIEW]',
-    `This ${destination ? `trip to ${destination}` : 'trip'} spanned ${tripDays || '?'} days with ${expenseCount} expenses totalling ~$${totalLocal.toFixed(2)} (USD equivalent), averaging ~$${dailyAvgInUSD || '?'}/day. (Mock mode — set OPENAI_API_KEY in your .env for real AI analysis.)`,
-    '',
-    '[TOP CATEGORIES]',
-    ...top3,
-    '',
-    '[INSIGHTS]',
-    `${topCat.charAt(0).toUpperCase() + topCat.slice(1)} dominates at ${topCatPct}% of total spend — worth reviewing if you want to cut costs on future trips.${unusedStr ? ` No spend was recorded in ${unusedStr}, which may indicate those costs were covered separately.` : ''}`,
-    '',
-    '[BUDGET TIP]',
-    `Since ${topCat} accounts for ${topCatPct}% of your budget, focusing savings efforts here will have the biggest impact on your overall trip cost.`,
-  ].join('\n');
-}
-
-module.exports = { buildPrompt, buildMockSummary };
+module.exports = { buildPrompt};

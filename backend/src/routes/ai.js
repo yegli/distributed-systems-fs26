@@ -4,7 +4,7 @@ const express = require('express');
 const OpenAI = require('openai');
 const pool = require('../db/client');
 const authenticate = require('../middleware/jwt');
-const { buildPrompt, buildMockSummary } = require('../prompts/tripSummary');
+const { buildPrompt } = require('../prompts/tripSummary');
 
 const router = express.Router();
 router.use(authenticate);
@@ -65,11 +65,6 @@ router.get('/:id/summary', async (req, res) => {
     const unusedCategories = ALL_CATEGORIES.filter(c => !breakdown[c]);
 
     const ctx = { ...trip, expenseCount, tripDays, dailyAvgInUSD, currencies, breakdown, topExpense, unusedCategories };
-
-    // Graceful degradation — no API key
-    if (!process.env.OPENAI_API_KEY) {
-      return res.json({ summary: buildMockSummary(ctx) });
-    }
 
     // Call OpenAI
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
