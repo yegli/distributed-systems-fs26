@@ -5,7 +5,7 @@ theme:
   name: dark
 ---
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 # Holiday Expense Tracker
 
@@ -29,7 +29,7 @@ theme:
 
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## What was built
 
@@ -42,7 +42,7 @@ A multi-user web app for tracking travel expenses across trips.
 
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Architecture
 
@@ -72,7 +72,7 @@ A multi-user web app for tracking travel expenses across trips.
 
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Traefik — Load Balancer
 
@@ -91,7 +91,7 @@ PathPrefix('/')                              →  Nginx (frontend)
 
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## JWT — Why Failover Is Seamless
 
@@ -110,7 +110,7 @@ Request  →  any instance verifies with shared JWT_SECRET  →  done
 
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## One-Command Setup
 
@@ -155,7 +155,7 @@ OPENAI_API_KEY=changeme
 
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Running containers
 To view the currently running containers run the command: 
@@ -164,11 +164,9 @@ docker compose -p expense-tracker ps \
   --format "table {{.Name}}\t{{.Status}}"
 ```
 
-<!-- snippet_output: containers -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Load balancing — live
 Watch `X-Served-By` alternate between api-1 and api-2:
@@ -179,11 +177,9 @@ for i in 1 2 3 4 5 6; do
 done
 ```
 
-<!-- snippet_output: lb -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Register a new user
 We can now register a new user in the Database by sending the following curl request and see that the JWT token is returned.
@@ -193,11 +189,9 @@ curl -s -X POST localhost/api/auth/register \
   -d '{"email":"tedy@example.com","password":"secret123"}' | jq
 ```
 
-<!-- snippet_output: register -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Login and get a JWT
 Alternatively we can also login with an existing user (added during seeding of database) and retrieve its JWT token.
@@ -207,11 +201,9 @@ curl -s -X POST localhost/api/auth/login \
   -d '{"email":"alice@example.com","password":"password"}' | jq
 ```
 
-<!-- snippet_output: login -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Call a protected endpoint — no token
 Now if we try to call one of the API endpoints without token we expect it to fail.
@@ -219,11 +211,9 @@ Now if we try to call one of the API endpoints without token we expect it to fai
 curl -s localhost/api/trips | jq
 ```
 
-<!-- snippet_output: no_token -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Call a protected endpoint — with token
 Now if we retrieve the token of Alice and return it with jq for the curl command as $TOKEN we get a succesfull response.
@@ -237,11 +227,9 @@ curl -s localhost/api/trips \
   -H "Authorization: Bearer $TOKEN" | jq '[.[] | {id,name,destination}]'
 ```
 
-<!-- snippet_output: with_token -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## User isolation
 
@@ -256,11 +244,9 @@ curl -s localhost/api/trips/1 \
   -H "Authorization: Bearer $BOB" | jq
 ```
 
-<!-- snippet_output: isolation -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Failover — kill api-2
 Now to demonstrate the failover capabilities we kill the api-2 instance.
@@ -273,11 +259,9 @@ for i in 1 2 3 4; do
 done
 ```
 
-<!-- snippet_output: failover_kill -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Failover — recover api-2
 
@@ -290,11 +274,9 @@ for i in 1 2 3 4 5 6; do
 done
 ```
 
-<!-- snippet_output: failover_recover -->
-
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Load test
 
@@ -319,7 +301,7 @@ docker run --rm -i grafana/k6 run \
 
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Load test (killed API instance)
 
@@ -353,7 +335,7 @@ And receive the following (or similar) results, showing a mostly successful fail
 ```
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Bottleneck: PostgreSQL
 
@@ -391,7 +373,7 @@ To scale: **PgBouncer** (transaction pooling) or a **read replica**
 
 <!-- end_slide -->
 
-<!-- font_size: 2 -->
+<!-- font_size: 1 -->
 &nbsp;
 ## Make Commands
 To run the project here a few helpful make commands. Have fun :)
