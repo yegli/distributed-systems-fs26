@@ -47,23 +47,27 @@ A multi-user web app for tracking travel expenses across trips.
 ## Architecture
 
 ```
-  Browser (Vue 3 + Nginx)
-         │
-         ▼
+         Browser
+            │
+            ▼
   ┌──────────────────┐
   │   Traefik  :80   │  ← load balancer + edge router
-  └───────┬──────────┘
-          │  round-robin
-    ┌─────┴──────┐
-    ▼            ▼
- ┌───────┐  ┌───────┐
- │ api-1 │  │ api-2 │  ← Node 22 / Express 5
- └───┬───┘  └───┬───┘
-     └─────┬────┘
-           ▼
-    ┌─────────────┐
-    │  PostgreSQL │  ← single persistent store
-    └─────────────┘
+  └──────┬─────┬─────┘
+         │     │  round-robin
+         │  ┌──┴─────────┐
+         │  ▼            ▼
+         │ ┌───────┐  ┌───────┐
+         │ │ api-1 │  │ api-2 │  ← Node 22 / Express 5
+         │ └───┬───┘  └───┬───┘
+         │     └─────┬────┘
+         │           ▼
+         │    ┌─────────────┐
+         │    │  PostgreSQL │  ← single persistent store
+         │    └─────────────┘
+         ▼
+  ┌─────────────────┐
+  │  Vue 3 + Nginx  │  ← SPA static assets
+  └─────────────────┘
 ```
 
 <!-- end_slide -->
@@ -127,6 +131,19 @@ This leads to the following state:
 1. DB schema auto-applied on first Postgres start
 2. Seed: 2 users · 6 trips · ~94 expenses
 3. Only manual step: copy `.env.example` → `.env`
+
+&nbsp;
+```bash
+# PostgreSQL password (used by both the postgres container and backend DATABASE_URL)
+POSTGRES_PASSWORD=changeme
+
+# Generate one with: openssl rand -hex 32
+JWT_SECRET=changeme
+
+# OpenAI API key — required for the AI trip summary feature (task 05)
+OPENAI_API_KEY=changeme
+
+```
 
 <!-- end_slide -->
 

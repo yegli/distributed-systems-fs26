@@ -62,6 +62,4 @@ export default function ({ token }) {
     'trips → 200': r => r.status === 200,
   })
   errorRate.add(!tripOk)
-
-  sleep(1)  // 1 s think time — keeps ~50 req/s per endpoint at 50 VUs
 }
