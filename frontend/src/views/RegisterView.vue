@@ -40,7 +40,7 @@ async function submit() {
   loading.value = true
   try {
     const { data } = await http.post('/auth/register', { email: email.value, password: password.value })
-    auth.setAuth(data.token, email.value)
+    auth.setAuth(data.token, data.refreshToken, email.value)
     router.push('/')
   } catch (err) {
     error.value = err.response?.data?.error || 'Registration failed'
