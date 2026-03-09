@@ -138,7 +138,10 @@ async function createTrip() {
   }
 }
 
-function handleLogout() {
+async function handleLogout() {
+  if (auth.refreshToken) {
+    await http.post('/auth/logout', { refreshToken: auth.refreshToken }).catch(() => {})
+  }
   auth.logout()
   router.push('/login')
 }

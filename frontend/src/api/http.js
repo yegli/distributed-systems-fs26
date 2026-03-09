@@ -5,7 +5,7 @@ const http = axios.create({
   baseURL: '/api',
 })
 
-// Attach JWT to every request
+// Attach access token to every request
 http.interceptors.request.use(config => {
   const auth = useAuthStore()
   if (auth.token) {
@@ -13,6 +13,9 @@ http.interceptors.request.use(config => {
   }
   return config
 })
+
+// Deduplicate concurrent refresh calls
+let refreshPromise = null
 
 // Capture X-Served-By header + handle 401 globally
 http.interceptors.response.use(
@@ -22,9 +25,29 @@ http.interceptors.response.use(
     if (served) auth.servedBy = served
     return response
   },
-  error => {
+  async error => {
+    const auth = useAuthStore()
+    const original = error.config
+
+    if (error.response?.status === 401 && !original._retried && auth.refreshToken) {
+      original._retried = true
+      try {
+        if (!refreshPromise) {
+          refreshPromise = http.post('/auth/refresh', { refreshToken: auth.refreshToken })
+            .finally(() => { refreshPromise = null })
+        }
+        const { data } = await refreshPromise
+        auth.setAuth(data.token, data.refreshToken, auth.email)
+        original.headers.Authorization = `Bearer ${data.token}`
+        return http(original)
+      } catch {
+        auth.logout()
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
+    }
+
     if (error.response?.status === 401) {
-      const auth = useAuthStore()
       auth.logout()
       window.location.href = '/login'
     }

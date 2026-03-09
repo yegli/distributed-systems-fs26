@@ -66,12 +66,15 @@ router.get('/:id/summary', async (req, res) => {
 
     const ctx = { ...trip, expenseCount, tripDays, dailyAvgInUSD, currencies, breakdown, topExpense, unusedCategories };
 
-    // Call OpenAI
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    // Call LLMHub
+    const client = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+      baseURL: 'https://api.llmhub.infs.ai/v1',
+    });
     const prompt = buildPrompt(ctx);
 
     const completion = await client.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'Flurin17/whisper-large-v3-turbo-swiss-german',
       messages: [{ role: 'user', content: prompt }],
       max_tokens: 600,
       temperature: 0.65,

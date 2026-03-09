@@ -21,6 +21,9 @@ services:
       INSTANCE_NAME: api-1
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:-changeme}@postgres:5432/expenses
       JWT_SECRET: ${JWT_SECRET:-changeme}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-changeme2}
+      ACCESS_TOKEN_EXPIRY: ${ACCESS_TOKEN_EXPIRY:-15m}
+      REFRESH_TOKEN_EXPIRY: ${REFRESH_TOKEN_EXPIRY:-7d}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       postgres:
@@ -40,6 +43,9 @@ services:
       INSTANCE_NAME: api-2
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/expenses
       JWT_SECRET: ${JWT_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-changeme2}
+      ACCESS_TOKEN_EXPIRY: ${ACCESS_TOKEN_EXPIRY:-15m}
+      REFRESH_TOKEN_EXPIRY: ${REFRESH_TOKEN_EXPIRY:-7d}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
     depends_on:
       postgres:
