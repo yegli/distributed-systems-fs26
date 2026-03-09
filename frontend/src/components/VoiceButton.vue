@@ -49,15 +49,17 @@ const props = defineProps({
 
 const emit = defineEmits(['expense-added'])
 
-// Check MediaRecorder support once
-const supported = typeof MediaRecorder !== 'undefined' && !!navigator.mediaDevices?.getUserMedia
+const AC = typeof AudioContext !== 'undefined' ? AudioContext : typeof webkitAudioContext !== 'undefined' ? webkitAudioContext : null
+const supported = !!AC && !!navigator.mediaDevices?.getUserMedia
 
 const state = ref('idle') // idle | recording | processing | playing
 const result = ref(null)
 const error = ref('')
 
-let mediaRecorder = null
-let audioChunks = []
+let audioCtx = null
+let processor = null
+let audioStream = null
+let pcmChunks = []
 
 const btnTitle = computed(() => ({
   idle: 'Click to start recording',
@@ -81,22 +83,16 @@ function toggleRecording() {
 async function startRecording() {
   error.value = ''
   result.value = null
-  audioChunks = []
+  pcmChunks = []
 
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-    mediaRecorder = new MediaRecorder(stream)
-
-    mediaRecorder.ondataavailable = e => {
-      if (e.data.size > 0) audioChunks.push(e.data)
-    }
-
-    mediaRecorder.onstop = () => {
-      stream.getTracks().forEach(t => t.stop())
-      sendAudio()
-    }
-
-    mediaRecorder.start()
+    audioStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    audioCtx = new AC({ sampleRate: 16000 })
+    const source = audioCtx.createMediaStreamSource(audioStream)
+    processor = audioCtx.createScriptProcessor(4096, 1, 1)
+    processor.onaudioprocess = e => pcmChunks.push(new Float32Array(e.inputBuffer.getChannelData(0)))
+    source.connect(processor)
+    processor.connect(audioCtx.destination)
     state.value = 'recording'
   } catch {
     error.value = 'Microphone access denied. Please allow microphone access and try again.'
@@ -104,22 +100,40 @@ async function startRecording() {
 }
 
 function stopRecording() {
-  if (state.value !== 'recording' || !mediaRecorder) return
-  mediaRecorder.stop()
+  if (state.value !== 'recording' || !processor) return
   state.value = 'processing'
+  processor.disconnect()
+  audioCtx.close()
+  audioStream.getTracks().forEach(t => t.stop())
+  sendAudio(encodeWAV(pcmChunks, 16000))
 }
 
-async function sendAudio() {
-  if (audioChunks.length === 0) {
-    state.value = 'idle'
-    return
+function encodeWAV(chunks, sampleRate) {
+  const total = chunks.reduce((n, c) => n + c.length, 0)
+  const buf = new ArrayBuffer(44 + total * 2)
+  const v = new DataView(buf)
+  const str = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)) }
+  str(0, 'RIFF'); v.setUint32(4, 36 + total * 2, true)
+  str(8, 'WAVE'); str(12, 'fmt ')
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true)
+  v.setUint32(24, sampleRate, true); v.setUint32(28, sampleRate * 2, true)
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true)
+  str(36, 'data'); v.setUint32(40, total * 2, true)
+  let off = 44
+  for (const chunk of chunks) {
+    for (let i = 0; i < chunk.length; i++, off += 2) {
+      const s = Math.max(-1, Math.min(1, chunk[i]))
+      v.setInt16(off, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
+    }
   }
+  return new Blob([buf], { type: 'audio/wav' })
+}
 
-  const mimeType = mediaRecorder?.mimeType || 'audio/webm'
-  const blob = new Blob(audioChunks, { type: mimeType })
+async function sendAudio(wavBlob) {
+  if (!wavBlob || wavBlob.size === 0) { state.value = 'idle'; return }
 
   const form = new FormData()
-  form.append('audio', blob, 'recording.webm')
+  form.append('audio', wavBlob, 'recording.wav')
   form.append('trip_id', String(props.tripId))
   form.append('home_currency', getStoredHomeCurrency())
 
@@ -129,38 +143,22 @@ async function sendAudio() {
     })
 
     result.value = { transcript: data.transcript, responseText: data.responseText }
-
-    if (data.newExpense) {
-      emit('expense-added', data.newExpense)
-    }
-
-    if (data.audioBase64) {
-      await playAudio(data.audioBase64)
-    } else {
-      state.value = 'idle'
-    }
+    await speak(data.responseText)
   } catch (err) {
     error.value = err.response?.data?.error || 'Voice command failed. Please try again.'
     state.value = 'idle'
   }
 }
 
-async function playAudio(base64) {
-  state.value = 'playing'
-  try {
-    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0))
-    const audioBlob = new Blob([bytes], { type: 'audio/mpeg' })
-    const url = URL.createObjectURL(audioBlob)
-    const audio = new Audio(url)
-    await new Promise(resolve => {
-      audio.onended = resolve
-      audio.onerror = resolve
-      audio.play().catch(resolve)
-    })
-    URL.revokeObjectURL(url)
-  } finally {
-    state.value = 'idle'
-  }
+function speak(text) {
+  return new Promise(resolve => {
+    state.value = 'playing'
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.lang = 'de-CH'
+    utter.onend = () => { state.value = 'idle'; resolve() }
+    utter.onerror = () => { state.value = 'idle'; resolve() }
+    speechSynthesis.speak(utter)
+  })
 }
 </script>
 
