@@ -1,22 +1,3 @@
-/**
- * k6 load test — Holiday Expense Tracker
- *
- * Stages:   10 s ramp-up → 30 s sustain at 50 VUs → 10 s ramp-down
- * Endpoints: GET /api/expenses  (primary)
- *            GET /api/trips     (secondary — spreads load across both backends)
- * Thresholds: p95 < 500 ms, error rate < 1 %
- *
- * Run (macOS / Docker Desktop):
- *   docker run --rm -i grafana/k6 run \
- *     -e BASE_URL=http://host.docker.internal \
- *     - < load-test/script.js
- *
- * Run (Linux / Docker Engine with --network host):
- *   docker run --rm -i --network host grafana/k6 run - < load-test/script.js
- *
- * Or via Makefile:  make load-test
- */
-
 import http   from 'k6/http'
 import { check, sleep } from 'k6'
 import { Rate } from 'k6/metrics'

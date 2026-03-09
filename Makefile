@@ -31,11 +31,10 @@ clean:
 	docker compose down -v
 	rm -rf backend/node_modules frontend/node_modules
 
-# Run k6 load test against the running stack (requires `make up` first)
-# Uses host.docker.internal for macOS Docker Desktop.
-# On Linux with Docker Engine, replace with:
-#   docker run --rm -i --network host grafana/k6 run - < load-test/script.js
+# Run k6 load test against the running stack (requires `make up` first).
+# Attaches k6 to the stack's internal Docker network so it hits Traefik
+# directly by container name — no host bridge needed, works on macOS and Linux.
 load-test:
-	docker run --rm -i grafana/k6 run \
-		-e BASE_URL=http://host.docker.internal \
+	docker run --rm -i --network expense-tracker_default grafana/k6 run \
+		-e BASE_URL=http://traefik \
 		- < load-test/script.js
