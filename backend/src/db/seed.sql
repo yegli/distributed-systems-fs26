@@ -4,8 +4,8 @@
 --   bob@example.com  / password   (3 trips: New York, Lisbon & Porto, Iceland)
 
 INSERT INTO users (email, password_hash) VALUES
-  ('alice@example.com', '$2b$12$sLWAUfMnvm283T5m8UGLL.ZUyIFQwghqM5HSK2Gs1ewbhXNVD94Ju'),
-  ('bob@example.com',   '$2b$12$QlNhE620iCkXxrglsscKpOstiTP.xFgl7Xq9n7PyPuL4xsgrAz7xi')
+  ('alice@example.com', '$2b$12$An4ZjeKOkG2JBAtoz3Kg7u5kX.uW5DO40iOcBBk.IOar20ITh4JZG'),
+  ('bob@example.com',   '$2b$12$mQsRAltui.ZXKE.TCcL6hOTEm8xs4phNlTLO6k2o1FLoFrbNVyXhC')
 ON CONFLICT (email) DO NOTHING;
 
 INSERT INTO trips (user_id, name, destination, start_date, end_date)
